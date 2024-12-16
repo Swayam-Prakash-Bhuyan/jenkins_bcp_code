@@ -1,24 +1,39 @@
 pipeline {
     agent any
-    
+
     stages {
-        stage('Jenkins Backup') {
+        stage('Create Backup') {
             steps {
-                sh '''
-                    cd /var/lib
-                    tar -czvf ${WORKSPACE}/jenkinsBackup.tar.gz jenkins
-                '''
+                script {
+                    // Define the backup file path in the workspace
+                    def backupFile = "${WORKSPACE}/jenkinsBackup.tar.gz"
+                    
+                    // Change directory to the workspace and create a backup tar file with ignore failed reads
+                    def tarResult = sh(script: "tar --ignore-failed-read -czvf ${backupFile} .", returnStatus: true)
+                    
+                    // Check if tar command was successful (status code 0 means success)
+                    if (tarResult != 0) {
+                        error "Tar command failed. Aborting the pipeline."
+                    }
+                }
             }
         }
 
-        stage('Upload into S3 Bucket') {
+        stage('Upload Backup to S3') {
             steps {
                 script {
-                    // Replace <bucket-name> with your S3 bucket name and set up AWS CLI
-                    sh '''
-                        s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'jenkins-backup-0 ', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: '/var/lib/jenkinsBackup.tar.gz', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 's3backup', userMetadata: []
-                        #aws s3 cp /var/lib/jenkinsBackup.tar.gz s3://<bucket-name>/jenkinsBackup.tar.gz
-                    '''
+                    // Define the backup file path in the workspace
+                    def backupFile = "${WORKSPACE}/jenkinsBackup.tar.gz"
+                    
+                    // Upload the backup to S3 only if the tar command was successful
+                    withAWS(credentials: 'jenkins-backup-user', region: 'us-east-1') {
+                        s3Upload(
+                            acl: 'Private', 
+                            bucket: 'jenkins-backup-0', 
+                            file: backupFile, 
+                            path: 'backup/'
+                        )
+                    }
                 }
             }
         }
