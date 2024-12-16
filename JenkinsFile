@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Jenkins Backup') {
+            steps {
+                sh '''
+                    cd /var/lib
+                    tar -czvf jenkinsBackup.tar.gz jenkins
+                '''
+            }
+        }
+
+        stage('Upload into S3 Bucket') {
+            steps {
+                script {
+                    // Replace <bucket-name> with your S3 bucket name and set up AWS CLI
+                    sh '''
+                        aws s3 cp /var/lib/jenkinsBackup.tar.gz s3://<bucket-name>/jenkinsBackup.tar.gz
+                    '''
+                }
+            }
+        }
+    }
+}
