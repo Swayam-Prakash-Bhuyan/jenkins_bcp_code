@@ -9,7 +9,7 @@ pipeline {
                     def backupFile = "${WORKSPACE}/jenkinsBackup.tar.gz"
                     
                     // Change directory to /var/lib/jenkins and create a backup tar file
-                    def tarResult = sh(script: "sudo tar --ignore-failed-read -czvf ${backupFile} -C /var/lib jenkins", returnStatus: true)
+                    def tarResult = sh(script: "tar --ignore-failed-read -czvf ${backupFile} -C /var/lib jenkins", returnStatus: true)
                     
                     // Check if tar command was successful (status code 0 means success)
                     if (tarResult != 0) {
