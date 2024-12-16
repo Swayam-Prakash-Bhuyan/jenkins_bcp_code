@@ -6,7 +6,7 @@ pipeline {
             steps {
                 sh '''
                     cd /var/lib
-                    sudo tar -czvf jenkinsBackup.tar.gz jenkins
+                    tar -czvf jenkinsBackup.tar.gz jenkins
                 '''
             }
         }
