@@ -5,11 +5,11 @@ pipeline {
         stage('Create Backup') {
             steps {
                 script {
-                    // Define the backup file path in the workspace
+                    // Define the backup file path
                     def backupFile = "${WORKSPACE}/jenkinsBackup.tar.gz"
                     
-                    // Change directory to the workspace and create a backup tar file with ignore failed reads
-                    def tarResult = sh(script: "tar --ignore-failed-read -czvf ${backupFile} .", returnStatus: true)
+                    // Change directory to /var/lib/jenkins and create a backup tar file
+                    def tarResult = sh(script: "sudo tar --ignore-failed-read -czvf ${backupFile} -C /var/lib jenkins", returnStatus: true)
                     
                     // Check if tar command was successful (status code 0 means success)
                     if (tarResult != 0) {
